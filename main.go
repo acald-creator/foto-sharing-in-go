@@ -34,7 +34,7 @@ var items = []FeedItem{
 }
 
 func getItems(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, items)
+	c.SecureJSON(http.StatusOK, items)
 }
 
 func postItems(c *gin.Context) {
@@ -45,7 +45,7 @@ func postItems(c *gin.Context) {
 	}
 
 	items = append(items, newItem)
-	c.IndentedJSON(http.StatusCreated, newItem)
+	c.SecureJSON(http.StatusCreated, newItem)
 }
 
 func getItemById(c *gin.Context) {
@@ -53,16 +53,27 @@ func getItemById(c *gin.Context) {
 
 	for _, a := range items {
 		if a.ID == id {
-			c.IndentedJSON(http.StatusOK, a)
+			c.SecureJSON(http.StatusOK, a)
 			return
 		}
 	}
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "item is not found"})
+	c.SecureJSON(http.StatusNotFound, gin.H{"message": "item is not found"})
 }
 func main() {
 	r := gin.Default()
-	r.GET("/items", getItems)
-	r.GET("/items/:id", getItemById)
-	r.POST("/items", postItems)
-	r.Run()
+
+	v1 := r.Group("/v1")
+	{
+		v1.GET("/items", getItems)
+		r.GET("/items/:id", getItemById)
+		r.POST("/items", postItems)
+	}
+
+	v2 := r.Group("/v2")
+	{
+		v2.GET("/items", getItems)
+		v2.GET("/items/:id", getItemById)
+		v2.POST("/items", postItems)
+	}
+	r.Run(":8080")
 }
